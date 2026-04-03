@@ -1,0 +1,107 @@
+USE olist;
+
+-- Initital Data Check
+
+SELECT *
+FROM customers
+LIMIT 10;
+
+SELECT * 
+FROM order_items
+LIMIT 10;
+
+SELECT *
+FROM orders
+LIMIT 10;
+
+SELECT *
+FROM payments
+LIMIT 10;
+
+SELECT *
+FROM products
+LIMIT 10;
+
+-- Joining Main Tables
+
+SELECT 
+    o.order_id,
+    o.order_purchase_timestamp,
+    c.customer_id,
+    c.customer_state,
+    oi.product_id,
+    oi.price
+FROM orders o
+INNER JOIN customers c
+ON o.customer_id = c.customer_id
+INNER JOIN order_items oi
+ON o.order_id = oi.order_id;
+
+-- Top 10 location that generate most revenue
+
+SELECT c.customer_state, ROUND(SUM(oi.price), 2) AS total_revenue
+FROM orders o
+INNER JOIN customers c
+ON o.customer_id = c.customer_id
+INNER JOIN order_items oi
+ON o.order_id = oi.order_id
+WHERE oi.price > 0
+GROUP BY c.customer_state
+ORDER BY total_revenue DESC
+LIMIT 10;
+
+-- Top Products
+
+SELECT 
+    p.product_category_name,
+    ROUND(SUM(oi.price), 2) AS total_revenue
+FROM order_items oi
+INNER JOIN products p
+ON oi.product_id = p.product_id
+GROUP BY p.product_category_name
+ORDER BY total_revenue DESC
+LIMIT 10;
+
+-- Top 10 Customers By Spending
+
+SELECT c.customer_id, ROUND(SUM(oi.price), 2) AS total_revenue
+FROM customers c
+INNER JOIN orders o 
+ON c.customer_id = o.customer_id
+INNER JOIN order_items oi
+ON o.order_id = oi.order_id
+GROUP BY c.customer_id
+ORDER BY total_revenue DESC
+LIMIT 10;
+
+-- Top 5 States by total number of orders
+
+SELECT c.customer_state, COUNT(o.order_id) AS total_orders
+FROM orders o
+INNER JOIN customers c
+ON o.customer_id = c.customer_id
+GROUP BY c.customer_state
+ORDER by total_orders DESC
+LIMIT 5;
+
+-- Average Order Value
+
+SELECT 
+    ROUND(SUM(oi.price) / COUNT(DISTINCT o.order_id), 2) AS avg_order_value
+FROM orders o
+INNER JOIN order_items oi
+ON o.order_id = oi.order_id
+WHERE oi.price > 0;
+SELECT 
+    c.customer_id,
+    c.customer_state,
+    COUNT(DISTINCT o.order_id) AS total_orders,
+    ROUND(SUM(oi.price), 2) AS total_spent
+FROM customers c
+INNER JOIN orders o
+ON c.customer_id = o.customer_id
+INNER JOIN order_items oi
+ON o.order_id = oi.order_id
+WHERE oi.price > 0
+GROUP BY c.customer_id, c.customer_state
+ORDER BY total_spent DESC;
